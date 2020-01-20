@@ -1,0 +1,22 @@
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: srt-ueast
+subsets:
+  - addresses:
+      - ip: 10.240.0.5
+    ports:
+      - port: 30666
+        protocol: UDP
+        name: srt
+---
+kind: Service
+apiVersion: "v1"
+metadata:
+  name: srt-ueast
+spec:
+  ports:
+    - port: 1234
+      protocol: "UDP"
+      name: srt
+  selector: {}

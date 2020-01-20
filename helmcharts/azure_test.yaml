@@ -3,6 +3,6 @@ image:
 receiverAddress: test1r-deep-srt-receiver
 receiverService:
   name: "test1r-deep-srt-receiver"
-reportFrequency: 100
+reportFrequency: 1000
 latency: 100
-
+bitrate: 1

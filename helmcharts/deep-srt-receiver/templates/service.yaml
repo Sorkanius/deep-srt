@@ -14,3 +14,23 @@ spec:
   selector:
     app.kubernetes.io/name: {{ include "deep-srt-receiver.name" . }}
     app.kubernetes.io/instance: {{ .Release.Name }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "deep-srt-receiver.fullname" . }}-np
+  labels:
+{{ include "deep-srt-receiver.labels" . | indent 4 }}
+spec:
+  type: NodePort
+  ports:
+    - port: {{ .Values.service.port }}
+      {{- if .Values.service.nodePort }}
+      nodePort: {{ .Values.service.nodePort }}
+      {{- end }}
+      targetPort: srt-input
+      protocol: UDP
+      name: srt-input
+  selector:
+    app.kubernetes.io/name: {{ include "deep-srt-receiver.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}

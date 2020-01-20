@@ -30,6 +30,8 @@ spec:
               value: {{ .Values.reportFrequency | quote }}
             - name: LATENCY
               value: {{ .Values.latency | quote }}
+            - name: FFMPEG_BITRATE
+              value: {{ .Values.bitrate | quote }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}

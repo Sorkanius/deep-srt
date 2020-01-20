@@ -18,6 +18,7 @@ receiverAddress: receiver
 receiverPort: 1234
 reportFrequency: 1000
 latency: 120
+bitrate: 2000k
 
 receiverService:
   port: 1234
