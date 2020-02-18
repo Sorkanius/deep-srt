@@ -1,35 +1,54 @@
 """
-Module to generate an interactive app to visualize and train a QoE predictive model
-from data retrieved out of srt-live-transmit protocol stats
-It relies of Streamlite library for the visualization and display of widgets
+Module to generate an interactive app to visualize and train a QoE predictive
+model from data retrieved out of srt-live-transmit application stats.
+It relies on streamlit library for the visualization and display of widgets.
 """
-
-import os.path
-
-from catboost import Pool, CatBoostRegressor, CatBoostClassifier
-
-import pandas as pd
-import streamlit as st
 import numpy as np
-import plotly.express as px
+import pandas as pd
 import plotly.graph_objects as go
-from sklearn.metrics import mean_squared_error, mean_absolute_error
-from sklearn.metrics import fbeta_score, roc_curve, auc
-from sklearn.preprocessing import StandardScaler
-from sklearn import svm
+import seaborn as sns
+import streamlit as st
 
-st.title('QoE model predictor')
 
-DATA_URI_QOE = '../logs/test.csv'
-FEATURES = ['Time',
-            'SocketID',
-            'pktFlowWindow',
-            'pktCongestionWindow',
-            'pktFlightSize',
-            'msRTT','mbpsBandwidth','mbpsMaxBW','pktSent','pktSndLoss','pktSndDrop','pktRetrans','byteSent','byteSndDrop','mbpsSendRate',
-            'usPktSndPeriod','pktRecv','pktRcvLoss','pktRcvDrop','pktRcvRetrans','pktRcvBelated','byteRecv','byteRcvLoss','byteRcvDrop',
-            'mbpsRecvRate','RCVLATENCYms','pktSndFilterExtra','pktRcvFilterExtra','pktRcvFilterSupply','pktRcvFilterLoss'
+# TODO: Change filepaths back
+# SND_LOGS = 'logs/transmitter.csv'
+# RCV_LOGS = 'logs/receiver.csv'
+SND_LOGS = '/Users/msharabayko/_data/mac_eunorth/local/4-srt-xtransmit-stats-snd.csv'
+RCV_LOGS = '/Users/msharabayko/_data/mac_eunorth/msharabayko@40.69.89.21/3-srt-xtransmit-stats-rcv.csv'
+
+
+# TODO: Uncomment features back
+FEATURES = [
+    'Time',
+    # 'pktFlowWindow',
+    # 'pktCongestionWindow',
+    'pktFlightSize',
+    'msRTT',
+    'mbpsBandwidth',
+    'pktSent',
+    'pktSndLoss',
+    'pktSndDrop',
+    'pktRetrans',
+    # 'byteSent',
+    # 'byteSndDrop',
+    'mbpsSendRate',
+    # 'usPktSndPeriod',
+    'pktRecv',
+    'pktRcvLoss',
+    'pktRcvDrop',
+    'pktRcvRetrans',
+    'pktRcvBelated',
+    # 'byteRecv',
+    # 'byteRcvLoss',
+    # 'byteRcvDrop',
+    'mbpsRecvRate',
+    # 'pktSndFilterExtra',
+    # 'pktRcvFilterExtra',
+    # 'pktRcvFilterSupply',
+    # 'pktRcvFilterLoss'
 ]
+
+
 def load_data(data_uri, nrows):
     """
     Function to retrieve data from a given file or URL
@@ -37,134 +56,52 @@ def load_data(data_uri, nrows):
     nrows limits the amount of data displayed for optimization
     """
     data_df = pd.read_csv(data_uri, nrows=nrows)
-    lowercase = lambda x: str(x).lower()
-    data_df.rename(lowercase, axis='columns', inplace=True)
-
+    data_df = data_df[FEATURES]
     return data_df
 
-def plot_3D(title, z_metric, z_axis, color_metric, df_aggregated):
-    """
-    Function to plot and format a 3D scatterplot from the aggregated dataframe
-    """
 
-    fig = go.Figure(data=go.Scatter3d(x=df_aggregated['dimension_y'],
-                                      y=df_aggregated['size'],
-                                      z=df_aggregated[z_metric],
-                                      mode='markers',
-                                      marker=dict(size=1,
-                                                  color=df_aggregated[color_metric],
-                                                  opacity=0.8
-                                                 )
-                                      ))
-    fig.update_layout(title=title,
-                      scene = dict(xaxis_title="Vertical Resolution",
-                                   yaxis_title="File Size",
-                                   zaxis_title=z_axis),
-                      font=dict(size=15),
-                      legend=go.layout.Legend(x=0,
-                                              y=1,
-                                              traceorder="normal",
-                                              font=dict(family="sans-serif",
-                                                        size=12,
-                                                        color="black"
-                                                        ),
-                                              bgcolor="LightSteelBlue",
-                                              bordercolor="Black",
-                                              borderwidth=2
-                                            )
-                     )
-    st.plotly_chart(fig, width=1000, height=1000)
-
-def plot_scatter(title, x_metric, y_metrics, x_axis_title, y_axis_title, df_aggregated, line=False):
+def plot_scatter(
+    title,
+    x_metric,
+    y_metrics,
+    x_axis_title,
+    y_axis_title,
+    df_aggregated
+):
     """
     Function to plot and format a scatterplot from the aggregated dataframe
     """
     data = []
     shapes = list()
     for y_metric in y_metrics:
-        data.append(go.Scatter(x=df_aggregated[x_metric],
-                            y=df_aggregated[y_metric],
-                            mode='lines',
-                            marker=dict(
-                                    opacity=0.8,
-                                    line=dict(width=0)
-                                    ),
-                            name=y_metric
-                            )
-                        )
-
-    # if line:
-    #     trace_line = go.Scatter(x=np.arange(0, 1.1, 0.1),
-    #                             y=np.arange(0, 1.1, 0.1),
-    #                             mode='lines',
-    #                             name='y=x')
-    #     data.append(trace_line)
-    # else:
-    #     shapes.append({'type': 'line',
-    #                 'xref': 'x',
-    #                 'yref': 'y',
-    #                 'x0': 0,
-    #                 'y0': 0,
-    #                 'x1': 0,
-    #                 'y1': 1000})
+        data.append(
+            go.Scatter(
+                x=df_aggregated.index,
+                y=df_aggregated[y_metric],
+                mode='lines',
+                marker=dict(opacity=0.8, line=dict(width=0)),
+                name=y_metric
+            )
+        )
 
     fig = go.Figure(data=data)
-    fig.update_layout(title=title,
-                      xaxis_title=x_axis_title,
-                      yaxis_title=y_axis_title,
-                      legend=go.layout.Legend(x=0,
-                                              y=1,
-                                            traceorder="normal",
-                                            font=dict(family="sans-serif",
-                                                    size=12,
-                                                    color="black"
-                                                    ),
-                                            bgcolor="LightSteelBlue",
-                                            bordercolor="Black",
-                                            borderwidth=2
-                                             ),
-                                             shapes=shapes
-                    )
-    st.plotly_chart(fig, width=1000, height=1000)
-
-def plot_histogram(metric, x_title, df_aggregated):
-    """
-    Function to plot and format a histogram from the aggregated dataframe
-    """
-    resolutions = list(df_aggregated['dimension_y'].unique())
-    resolutions.sort()
-    data = []
-    for res in resolutions:
-        data.append(go.Histogram(x=df_aggregated[metric][df_aggregated['dimension_y'] == res],
-                                 name='{}p'.format(res),
-                                 autobinx=False,
-                                 nbinsx=500,
-                                 opacity=0.75))
-    shapes = list()
-    # shapes.append({'type': 'line',
-    #             'xref': 'x',
-    #             'yref': 'y',
-    #             'x0': 0,
-    #             'y0': 0,
-    #             'x1': 0,
-    #             'y1': 1000})
-
-    fig = go.Figure(data=data)
-    fig.layout.update(barmode='overlay',
-                      title='Histogram of legit assets',
-                      xaxis_title_text=x_title,
-                      yaxis_title_text='Count',
-                      legend=go.layout.Legend(x=1,
-                            y=1,
-                            traceorder="normal",
-                            font=dict(family="sans-serif",
-                                    size=12,
-                                    color="black"
-                                                        )
-                                    ),
-                      shapes=shapes
+    fig.update_layout(
+        title=title,
+        xaxis_title=x_axis_title,
+        yaxis_title=y_axis_title,
+        legend=go.layout.Legend(
+            x=0,
+            y=1,
+            traceorder="normal",
+            font=dict(family="sans-serif", size=8, color="black"),
+            bgcolor="LightSteelBlue",
+            bordercolor="Black",
+            borderwidth=2
+        ),
+        shapes=shapes
     )
     st.plotly_chart(fig)
+
 
 def plot_correlation_matrix(df_aggregated):
     """
@@ -174,43 +111,107 @@ def plot_correlation_matrix(df_aggregated):
     df_features = pd.DataFrame(df_aggregated[FEATURES])
     corr = df_features.corr()
     corr.style.background_gradient(cmap='coolwarm')
-    fig = go.Figure(data=go.Heatmap(x=FEATURES,
-                                    y=FEATURES,
-                                    z=corr
-                                    ))
- 
-    st.plotly_chart(fig, width=1000, height=1000)
+    fig = go.Figure(data=go.Heatmap(x=FEATURES, y=FEATURES, z=corr))
+    st.plotly_chart(fig)
+
+
+def plot_corr_matrix(df):
+    """ Alternative implementation of displaying correlation matrix """
+    df = df.pct_change()
+    corr = df.corr(method='spearman')
+    sns.clustermap(corr, cmap='coolwarm')
+    st.pyplot()
+
 
 def main():
     """
     Main function to train and evaluate tamper and QoE models
     """
+    st.title('QoE model predictor')
+
+    st.subheader('Raw features')
+    st.write(FEATURES)
+
     # Get QoE pristine dataset (no attacks)
-    df_qoe = load_data(DATA_URI_QOE, 50000)
+    df_snd = load_data(SND_LOGS, 50000)
+    df_rcv = load_data(RCV_LOGS, 50000)
 
-    df_qoe = df_qoe.loc[:, (df_qoe != 0).any(axis=0)]
-    # # Display datasets
-    st.subheader('Raw QoE data')
-    st.write(df_qoe.head(100), df_qoe.shape)
+    # Display raw datasets
+    st.subheader('Raw SENDER data')
+    st.write(df_snd, df_snd.shape)
 
-    st.subheader('Describe QoE data')
-    st.write(df_qoe.describe())
-    # # Display correlation between measured distance to decision function, resolution and size.
-    # plot_3D('OC-SVM Classifier', 'ocsvm_dist', 'Distance to Decision Function', 'tamper', df_plots_aggregated)
-    # # Display histogram of non-tampered assets
-    # plot_histogram('ocsvm_dist', 'Distance to decision function', df_aggregated)
-    # # Display difference between predicted ssim and measured ssim
-    # # according to their tamper classification
-    plot_scatter('MSRTT time series',
-                 'time',
-                 df_qoe.columns,
-                 'Time',
-                 'MSRTT',
-                 df_qoe,
-                 line=True)
-    # # Display correlation matrix
-    plot_correlation_matrix(df_qoe)
+    st.subheader('Raw RECEIVER data')
+    st.write(df_rcv, df_rcv.shape)
+
+    # Preprocess the datasets to align time series and remove spurious data
+    # Filter out zero values
+    df_snd = df_snd.loc[:, (df_snd != 0).any(axis=0)]
+    df_rcv = df_rcv.loc[:, (df_rcv != 0).any(axis=0)]
+    # Remove NANs
+    df_snd = df_snd.dropna()
+    df_rcv = df_rcv.dropna()
+    # Align time series
+    df_snd = df_snd[df_snd['Time'] > df_rcv['Time'].min()]
+    df_rcv = df_rcv[df_rcv['Time'] < df_snd['Time'].max()]
+
+    df_snd.set_index('Time', inplace=True)
+    df_rcv.set_index('Time', inplace=True)
+   
+    df_synchronized = df_snd.join(df_rcv, how='outer', lsuffix='_snd', rsuffix='_rcv')
+    df_synchronized = df_synchronized.interpolate()
+    df_synchronized['Rate'] = df_synchronized['mbpsSendRate'] / (df_synchronized['mbpsRecvRate'])
+
+    # Display processed datasets
+    st.subheader('Processed SENDER data')
+    st.write(df_snd, df_snd.shape)
+
+    st.subheader('Processed RECEIVER data')
+    st.write(df_rcv, df_rcv.shape)
+
+    st.subheader('SYNCHRONIZED data')
+    st.write(df_synchronized, df_synchronized.shape)
+
+    st.subheader('Summary, SYNCHRONIZED data')
+    st.write(df_synchronized.describe())
+
+    plot_scatter(
+        'SENDER Time series',
+        'Time',
+        df_snd.columns,
+        'Time',
+        'SENDER',
+        df_snd
+    )
+
+    plot_scatter(
+        'RECEIVER Time series',
+        'Time',
+        df_rcv.columns,
+        'Time',
+        'RECEIVER',
+        df_rcv
+    )
+
+    plot_scatter(
+        'SYNCHRONIZED Time series',
+        'Time',
+        df_synchronized.columns,
+        'Time',
+        'SYNCHRONIZED',
+        df_synchronized
+    )
+
+    # Display correlation matrixs
+    st.write('Correlation matrixs on levels, Pearson')
+    plot_correlation_matrix(df_rcv)
+    plot_correlation_matrix(df_snd)
+    plot_correlation_matrix(df_synchronized)
+
+    st.write('Correlation matrixs on returns, Spearman')
+    plot_corr_matrix(df_rcv)
+    plot_corr_matrix(df_snd)
+    plot_corr_matrix(df_synchronized)
+
 
 if __name__ == '__main__':
-
     main()
