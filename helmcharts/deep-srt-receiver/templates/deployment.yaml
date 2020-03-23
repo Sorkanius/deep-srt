@@ -20,6 +20,10 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
     {{- end }}
+      volumes:
+        - name: logs
+          persistentVolumeClaim:
+            claimName: deep-srt-logs
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ include "registryandrepository" . }}:{{ .Values.image.tag }}"
@@ -33,6 +37,9 @@ spec:
               value: {{ .Values.reportFrequency | quote }}
             - name: LATENCY
               value: {{ .Values.latency | quote }}
+          volumeMounts:
+            - mountPath: /logs
+              name: logs
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}

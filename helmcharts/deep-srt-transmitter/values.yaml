@@ -6,8 +6,8 @@ replicaCount: 1
 
 image:
   registry: ""
-  repository: deep-srt-transmitter
-  tag: latest
+  repository: transmitter-srt
+  tag: v2
   pullPolicy: Always
 
 imagePullSecrets: []
@@ -16,12 +16,14 @@ fullnameOverride: ""
 
 receiverAddress: receiver
 receiverPort: 1234
-reportFrequency: 1000
-latency: 120
-bitrate: 2000k
+reportFrequency: 1000ms
+latency: 100
+bitrate: 2Mbps
+duration: 120s
 
 receiverService:
   port: 1234
+  name: aSrt-receiver
 
 service:
   type: ClusterIP

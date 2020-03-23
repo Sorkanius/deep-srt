@@ -1,0 +1,22 @@
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: srt-aus
+subsets:
+  - addresses:
+      - ip: 13.0.1.4
+    ports:
+      - port: 30666
+        protocol: UDP
+        name: srt
+---
+kind: Service
+apiVersion: "v1"
+metadata:
+  name: srt-aus
+spec:
+  ports:
+    - port: 1234
+      protocol: "UDP"
+      name: srt
+  selector: {}

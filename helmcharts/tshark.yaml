@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: tshark
+spec:
+  containers:
+    - name: tshark
+      image: olympia.azurecr.io/tshark
+      command:
+        - "tshark"
+        - "-i"
+        - "eth0"
+        - "-w"
+        - "rc-vSRT.pcapng"
+      resources:
+        limits:
+          cpu: 200m
+          memory: 100Mi
+        requests:
+          cpu: 100m
+          memory: 50Mi
+      stdin: true
+      securityContext:
+        privileged: true
+  restartPolicy: Never

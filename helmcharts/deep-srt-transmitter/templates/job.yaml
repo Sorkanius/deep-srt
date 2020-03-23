@@ -15,13 +15,15 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      volumes:
+        - name: logs
+          persistentVolumeClaim:
+            claimName: deep-srt-logs
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ include "registryandrepository" . }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
-            - name: MEDIUM
-              value: "srt"
             - name: RECEIVER_ADDRESS
               value: {{ .Values.receiverAddress | quote }}
             - name: RECEIVER_PORT
@@ -30,10 +32,21 @@ spec:
               value: {{ .Values.reportFrequency | quote }}
             - name: LATENCY
               value: {{ .Values.latency | quote }}
-            - name: FFMPEG_BITRATE
+            - name: SENDRATE
               value: {{ .Values.bitrate | quote }}
+            - name: DURATION
+              value: {{ .Values.duration | quote }}
+            - name: ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - mountPath: /logs
+              name: logs
+          securityContext:
+            privileged: true
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

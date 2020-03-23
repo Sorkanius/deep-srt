@@ -1,6 +1,7 @@
 FROM base-srt:v2
-ENV INPUT_PORT=4200
+EXPOSE 1234/udp
 ENV REPORT_FREQUENCY=1000ms
-RUN echo "'Listening in port $INPUT_PORT'"
+ENV LATENCY=100
 RUN echo "'Report frequency set to $REPORT_FREQUENCY milliseconds'"
-CMD ./bin/srt-xtransmit receive "srt://:$INPUT_PORT?transtype=live&rcvbuf=1000000000&sndbuf=1000000000" --msgsize 1316 --statsfile /logs/stats-rcv.csv --statsfreq 100ms
+RUN mkdir /logs
+CMD ./bin/srt-xtransmit --loglevel fatal receive "srt://1234?transtype=live&latency=$LATENCY" --msgsize 1316 --statsfile /dev/stdout --statsfreq $REPORT_FREQUENCY

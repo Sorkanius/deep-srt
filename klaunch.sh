@@ -1,6 +1,7 @@
 #!/bin/bash
 RED='\033[0;31m'
 NC='\033[0m'
+DURATION=120
 
 function print_usage() {
         echo ""
@@ -58,21 +59,21 @@ show_message "Test $RELEASE_NAME from $CONTEXT_T to $CONTEXT_R with latency $LAT
 if [ "$CONTEXT_R" == "$CONTEXT_T" ]; then
   RECEIVER_ADDRESS="${RECEIVER_RN}-deep-srt-receiver"
 else
-  UEAST_PORT="30666"
+  UEAST_PORT="30635"
   UEAST_SERVICE_NAME="srt-ueast"
-  FR_PORT="30635"
   FR_SERVICE_NAME="srt-fr"
-
+  AUS_SERVICE_NAME="srt-aus"
   RECEIVER_ADDRESS="$UEAST_SERVICE_NAME"
   NODEPORT="$UEAST_PORT"
   if [ "$CONTEXT_R" == "olympiaFR" ]; then
     RECEIVER_ADDRESS="$FR_SERVICE_NAME"
-    NODEPORT="$FR_PORT"
+  elif [ "$CONTEXT_R" == "olympiaAUS" ]; then
+    RECEIVER_ADDRESS="$AUS_SERVICE_NAME"
   fi
 fi
 
 TARGET_IP=$(kubectl --context "$CONTEXT_R" get nodes -o json | jq -r '.items[0].status.addresses[] | select(.type=="InternalIP") | .address')
 echo "Target ip is $TARGET_IP"
 helm install --name "$RECEIVER_RN" helmcharts/deep-srt-receiver $CONTEXT_R_PARAM --values helmcharts/azure_test.yaml --set "latency=${LATENCY}" --set service.nodePort=${NODEPORT}
-helm install --name "$TRANSMITTER_RN" helmcharts/deep-srt-transmitter $CONTEXT_T_PARAM --values helmcharts/azure_test.yaml --set "latency=${LATENCY}" --set receiverAddress=${RECEIVER_ADDRESS}
+helm install --name "$TRANSMITTER_RN" helmcharts/deep-srt-transmitter $CONTEXT_T_PARAM --values helmcharts/azure_test.yaml --set "latency=${LATENCY}" --set receiverAddress=${RECEIVER_ADDRESS} --set duration=$DURATION
 

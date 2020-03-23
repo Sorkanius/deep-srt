@@ -1,9 +1,13 @@
 FROM base-srt:v2
 ENV RECEIVER_ADDRESS=receiver-srt
-ENV RECEIVER_PORT=4200
+ENV RECEIVER_PORT=1234
+ENV LATENCY=100
 ENV REPORT_FREQUENCY=1000ms
 ENV SENDRATE=2Mbps
+ENV DURATION=120s
+ENV ID="transmitter"
 RUN echo "'Transmitting to $RECEIVER_ADDRESS in port $RECEIVER_PORT'"
 RUN echo "'Report frequency set to $REPORT_FREQUENCY milliseconds'"
+RUN mkdir /logs
 COPY entrypoint.sh /
 CMD ["/entrypoint.sh"]

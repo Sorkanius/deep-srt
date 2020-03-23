@@ -6,16 +6,16 @@ replicaCount: 1
 
 image:
   registry: ""
-  repository: deep-srt-receiver
-  tag: latest
+  repository: receiver-srt
+  tag: v2
   pullPolicy: Always
 
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
-reportFrequency: 1000
-latency: 120
+reportFrequency: 1000ms
+latency: 100
 
 service:
   type: ClusterIP
@@ -52,3 +52,8 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+pv:
+  storageClassName: default
+  storage: 2Gi
+  mountOptions: []
