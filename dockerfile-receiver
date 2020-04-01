@@ -2,6 +2,8 @@ FROM base-srt:v2
 EXPOSE 1234/udp
 ENV REPORT_FREQUENCY=1000ms
 ENV LATENCY=100
+ENV ID="receiver"
 RUN echo "'Report frequency set to $REPORT_FREQUENCY milliseconds'"
 RUN mkdir /logs
-CMD ./bin/srt-xtransmit --loglevel fatal receive "srt://1234?transtype=live&latency=$LATENCY" --msgsize 1316 --statsfile /dev/stdout --statsfreq $REPORT_FREQUENCY
+COPY entrypoint_rcv.sh /
+CMD ["/entrypoint_rcv.sh"]

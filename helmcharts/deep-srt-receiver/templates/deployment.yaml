@@ -37,9 +37,15 @@ spec:
               value: {{ .Values.reportFrequency | quote }}
             - name: LATENCY
               value: {{ .Values.latency | quote }}
+            - name: ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
           volumeMounts:
             - mountPath: /logs
               name: logs
+          securityContext:
+            privileged: true
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}

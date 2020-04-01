@@ -6,7 +6,7 @@ DURATION=120
 function print_usage() {
         echo ""
         echo "Usage:"
-        echo "${0} <release_name> <transmitter_context?> <receiver_context?><latency?>"
+        echo "${0} <release_name> <transmitter_context?> <receiver_context?> <latency?>"
         echo "release_name: Unique name to use as this test (must be unique in both transmitter and receiver context). Mandatory"
         echo "transmitter_context: kubernetes context name of the transmitter cluster. If empty, current-context is used. Can be enforced as current with character '-'"
         echo "receiver_context: kubernetes context name of the receiver cluster. If empty, current-context is used. Can be enforced as current with character '-'"
@@ -74,6 +74,6 @@ fi
 
 TARGET_IP=$(kubectl --context "$CONTEXT_R" get nodes -o json | jq -r '.items[0].status.addresses[] | select(.type=="InternalIP") | .address')
 echo "Target ip is $TARGET_IP"
-helm install --name "$RECEIVER_RN" helmcharts/deep-srt-receiver $CONTEXT_R_PARAM --values helmcharts/azure_test.yaml --set "latency=${LATENCY}" --set service.nodePort=${NODEPORT}
-helm install --name "$TRANSMITTER_RN" helmcharts/deep-srt-transmitter $CONTEXT_T_PARAM --values helmcharts/azure_test.yaml --set "latency=${LATENCY}" --set receiverAddress=${RECEIVER_ADDRESS} --set duration=$DURATION
+helm install --name "$RECEIVER_RN" --namespace olympia helmcharts/deep-srt-receiver $CONTEXT_R_PARAM --values helmcharts/azure_test.yaml --set "latency=${LATENCY}" --set service.nodePort=${NODEPORT}
+helm install --name "$TRANSMITTER_RN" --namespace olympia helmcharts/deep-srt-transmitter $CONTEXT_T_PARAM --values helmcharts/azure_test.yaml --set "latency=${LATENCY}" --set receiverAddress=${RECEIVER_ADDRESS} --set duration=$DURATION
 
