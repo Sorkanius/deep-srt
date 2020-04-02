@@ -9,5 +9,5 @@ ENV ID="transmitter"
 RUN echo "'Transmitting to $RECEIVER_ADDRESS in port $RECEIVER_PORT'"
 RUN echo "'Report frequency set to $REPORT_FREQUENCY milliseconds'"
 RUN mkdir /logs
-COPY entrypoint_snd.sh /
+COPY transmitter/entrypoint_snd.sh /
 CMD ["/entrypoint_snd.sh"]

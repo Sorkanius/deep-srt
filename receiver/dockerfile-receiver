@@ -5,5 +5,5 @@ ENV LATENCY=100
 ENV ID="receiver"
 RUN echo "'Report frequency set to $REPORT_FREQUENCY milliseconds'"
 RUN mkdir /logs
-COPY entrypoint_rcv.sh /
+COPY receiver/entrypoint_rcv.sh /
 CMD ["/entrypoint_rcv.sh"]
